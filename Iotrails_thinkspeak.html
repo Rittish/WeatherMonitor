@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Dashboard with Admin Panel</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+    <!-- DataTables for admin panel -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <!-- Animation Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6d28d9;
+            --primary-light: #8b5cf6;
+            --primary-dark: #5b21b6;
+            --danger: #ef4444;
+            --danger-light: #f87171;
+            --success: #10b981;
+            --success-light: #34d399;
+            --warning: #f59e0b;
+            --warning-light: #fbbf24;
+            --dark: #111827;
+            --dark-secondary: #1f2937;
+            --dark-tertiary: #374151;
+            --light: #f9fafb;
+            --light-secondary: #f3f4f6;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --card-bg: #1f2937;
+            --card-border: #374151;
+            --glow-primary: 0 0 15px rgba(109, 40, 217, 0.5);
+            --glow-danger: 0 0 15px rgba(239, 68, 68, 0.5);
+            --glow-success: 0 0 15px rgba(16, 185, 129, 0.5);
+            --glow-warning: 0 0 15px rgba(245, 158, 11, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-secondary) 100%);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--dark-tertiary);
+        }
+
+        h1 {
+            color: var(--primary-light);
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, transparent 100%);
+            border-radius: 3px;
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .refresh-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .refresh-btn:hover::before {
+            left: 100%;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
+        .card:nth-child(2)::before {
+            background: linear-gradient(90deg, var(--success) 0%, var(--success-light) 100%);
+        }
+
+        .card:nth-child(3)::before {
+            background: linear-gradient(90deg, var(--warning) 0%, var(--warning-light) 100%);
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        .card-title i {
+            color: var(--primary-light);
+            font-size: 20px;
+        }
+
+        .card:nth-child(2) .card-title i {
+            color: var(--success-light);
+        }
+
+        .card:nth-child(3) .card-title i {
+            color: var(--warning-light);
+        }
+
+        .card-value {
+            font-size: 48px;
+            font-weight: 600;
+            margin: 15px 0;
+            text-align: center;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(to right, var(--primary-light), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .temperature-value {
+            background: linear-gradient(to right, var(--danger-light), var(--danger));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: var(--glow-danger);
+        }
+
+        .humidity-value {
+            background: linear-gradient(to right, var(--success-light), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: var(--glow-success);
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--dark-tertiary);
+        }
+
+        .unit {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .trend {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease-out;
+            transition: all 0.3s ease;
+        }
+
+        .trend:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .trend.high {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-light);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .trend.low {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-light);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .trend.stable {
+            background: rgba(109, 40, 217, 0.15);
+            color: var(--primary-light);
+            border: 1px solid rgba(109, 40, 217, 0.3);
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+            height: 450px;
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--danger) 50%, var(--success) 100%);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+            border: 1px solid var(--card-border);
+            transition: all 0.4s ease;
+        }
+
+        .status-bar:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .status-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .status:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .status.connected {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-light);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-light);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning-light);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .last-update {
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .last-update::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        /* Admin Panel Styles */
+        .admin-panel {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            margin-bottom: 40px;
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            
+        }
+
+        .admin-panel:hover {
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .admin-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--dark-tertiary);
+        }
+
+        .admin-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-title i {
+            font-size: 22px;
+        }
+
+        .data-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .data-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .data-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.6s;
+        }
+
+        .data-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .data-btn:hover::before {
+            left: 100%;
+        }
+
+        .data-btn.export {
+            background: var(--success);
+        }
+
+        .data-btn.export:hover {
+            background: var(--success-light);
+        }
+
+        .data-btn.delete {
+            background: var(--danger);
+        }
+
+        .data-btn.delete:hover {
+            background: var(--danger-light);
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 85%;
+            max-width: 650px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            animation: slideInDown 0.4s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--dark-tertiary);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .close-btn:hover {
+            color: var(--danger-light);
+            background: rgba(239, 68, 68, 0.1);
+            transform: rotate(90deg);
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .filter-controls input, .filter-controls select {
+            padding: 10px 15px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            background: var(--light);
+            color: #000000;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-controls input:focus, .filter-controls select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.1);
+        }
+
+        /* DataTable Dark Theme */
+        .dataTables_wrapper {
+            color: var(--text-primary);
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--text-primary);
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            background: var(--light);
+            color: #000000;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        table.dataTable {
+            background: var(--light);
+            color: #000000;
+            border-collapse: collapse;
+        }
+
+        table.dataTable thead th {
+            background: var(--light-secondary);
+            color: #000000;
+            border-bottom: 2px solid var(--primary);
+            padding: 12px 8px;
+            font-weight: 600;
+        }
+
+        table.dataTable tbody td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 10px 8px;
+            color: #000000;
+            background: var(--light);
+        }
+
+        table.dataTable tbody tr:hover {
+            background: var(--light-secondary);
+        }
+
+        table.dataTable tbody tr:hover td {
+            color: #000000;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            background: var(--light-secondary);
+            color: #000000 !important;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            margin: 0 2px;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: var(--primary) !important;
+            color: white !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--primary) !important;
+            color: white !important;
+        }
+
+        /* Ensure all table text is black */
+        #data-table td,
+        #data-table th {
+            color: #000000 !important;
+        }
+
+        #data-table tbody tr {
+            background: var(--light) !important;
+        }
+
+        #data-table tbody tr:hover {
+            background: var(--light-secondary) !important;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translate3d(0,0,0);
+            }
+            40%, 43% {
+                transform: translate3d(0, -30px, 0);
+            }
+            70% {
+                transform: translate3d(0, -15px, 0);
+            }
+            90% {
+                transform: translate3d(0, -4px, 0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .status-container {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+            }
+
+            .data-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 20px;
+            }
+
+            .card-value {
+                font-size: 36px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Glow Effects */
+        .glow-primary {
+            box-shadow: var(--glow-primary);
+        }
+
+        .glow-danger {
+            box-shadow: var(--glow-danger);
+        }
+
+        .glow-success {
+            box-shadow: var(--glow-success);
+        }
+
+        .glow-warning {
+            box-shadow: var(--glow-warning);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="animate__animated animate__fadeInDown">
+            <h1 class="animate__animated animate__fadeIn animate__delay-1s">IoT Dashboard with Admin Panel</h1>
+            <button id="refresh-btn" class="refresh-btn animate__animated animate__fadeIn animate__delay-1s">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </header>
+
+        <div class="dashboard">
+            <div class="card animate__animated animate__fadeInUp animate__delay-1s" data-aos="fade-up">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-temperature-high"></i> Temperature</h2>
+                    <span id="temp-trend" class="trend stable"><i class="fas fa-equals"></i> Stable</span>
+                </div>
+                <div class="card-value temperature-value" id="temperature-value">--</div>
+                <div class="card-footer">
+                    <span class="unit">°C</span>
+                </div>
+            </div>
+
+            <div class="card animate__animated animate__fadeInUp animate__delay-1s" data-aos="fade-up" data-aos-delay="100">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-tint"></i> Humidity</h2>
+                    <span id="hum-trend" class="trend stable"><i class="fas fa-equals"></i> Stable</span>
+                </div>
+                <div class="card-value humidity-value" id="humidity-value">--</div>
+                <div class="card-footer">
+                    <span class="unit">% RH</span>
+                </div>
+            </div>
+
+            <div class="card animate__animated animate__fadeInUp animate__delay-1s" data-aos="fade-up" data-aos-delay="200">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-microchip"></i> Device Status</h2>
+                </div>
+                <div class="card-value" style="font-size: 24px; line-height: 1.6;">
+                    <div><i class="fas fa-wifi" id="wifi-icon"></i> WiFi: <span id="wifi-status">--</span></div>
+                    <div><i class="fas fa-cloud" id="cloud-icon"></i> ThingSpeak: <span id="cloud-status">--</span></div>
+                </div>
+                <div class="card-footer">
+                    <span class="unit" id="device-ip">IP: --</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container animate__animated animate__fadeIn animate__delay-2s" data-aos="fade-up" data-aos-delay="300">
+            <canvas id="sensorChart"></canvas>
+        </div>
+
+        <div class="status-bar animate__animated animate__fadeInUp animate__delay-2s" data-aos="fade-up" data-aos-delay="400">
+            <div class="status-container">
+                <span class="status" id="connection-status"><i class="fas fa-circle-notch fa-spin"></i> Loading...</span>
+                <span class="status" id="database-status"><i class="fas fa-database"></i> Database: --</span>
+            </div>
+            <div class="last-update">
+                Last update: <span id="last-update">--</span>
+            </div>
+        </div>
+        
+        <!-- Admin Panel Section -->
+        <div class="admin-panel animate__animated animate__fadeInUp animate__delay-2s" data-aos="fade-up" data-aos-delay="500">
+            <div class="admin-header">
+                <h2 class="admin-title"><i class="fas fa-user-shield"></i> Admin Panel</h2>
+                <div class="data-actions">
+                    <button id="export-btn" class="data-btn export">
+                        <i class="fas fa-file-export"></i> Export Data
+                    </button>
+                    <button id="delete-btn" class="data-btn delete">
+                        <i class="fas fa-trash-alt"></i> Clear Data
+                    </button>
+                </div>
+            </div>
+
+            <div class="filter-controls">
+                <input type="date" id="start-date" placeholder="Start date">
+                <input type="date" id="end-date" placeholder="End date">
+                <select id="data-type">
+                    <option value="all">All Data</option>
+                    <option value="temperature">Temperature Only</option>
+                    <option value="humidity">Humidity Only</option>
+                </select>
+                <button id="filter-btn" class="data-btn">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+
+            <table id="data-table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Temperature (°C)</th>
+                        <th>Humidity (% RH)</th>
+                        <th>Device IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content animate__animated animate__fadeInDown">
+            <div class="modal-header">
+                <h3 class="modal-title">Export Data</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div style="margin-bottom: 25px; color: var(--text-primary);">
+                <p>Select export format:</p>
+                <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                    <button id="export-csv" class="data-btn export">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                    <button id="export-json" class="data-btn export">
+                        <i class="fas fa-file-code"></i> JSON
+                    </button>
+                    <button id="export-excel" class="data-btn export">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                </div>
+            </div>
+            <div style="color: var(--text-primary);">
+                <p>Export options:</p>
+                <label style="display: block; margin: 15px 0; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="include-timestamp" checked style="width: 18px; height: 18px; accent-color: var(--primary); background-color: var(--light); border: 1px solid var(--primary);">
+                    <span>Include timestamp</span>
+                </label>
+                <label style="display: block; margin: 15px 0; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="include-device-info" checked style="width: 18px; height: 18px; accent-color: var(--primary); background-color: var(--light); border: 1px solid var(--primary);">
+                    <span>Include device info</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content animate__animated animate__fadeInDown">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Data Deletion</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div style="margin-bottom: 25px; color: var(--text-primary);">
+                <p>Are you sure you want to delete the selected data? This action cannot be undone.</p>
+                <div style="margin-top: 20px; background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="delete-all" style="width: 18px; height: 18px; accent-color: var(--danger);">
+                        <span>Delete ALL historical data</span>
+                    </label>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 15px;">
+                <button id="cancel-delete" class="data-btn">Cancel</button>
+                <button id="confirm-delete" class="data-btn delete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CHANNEL_ID = "3009869"; 
+        const READ_API_KEY = "76VLE0GFV3Z4PD6X"; 
+        const UPDATE_INTERVAL = 5000; // 30 seconds to match ThingSpeak limits
+        const API_BASE_URL = "mongodb://localhost:27017/"; // Replace with your backend API URL if needed
+
+        // DOM Elements
+        const tempElement = document.getElementById('temperature-value');
+        const humElement = document.getElementById('humidity-value');
+        const lastUpdateElement = document.getElementById('last-update');
+        const connectionStatus = document.getElementById('connection-status');
+        const databaseStatus = document.getElementById('database-status');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const tempTrend = document.getElementById('temp-trend');
+        const humTrend = document.getElementById('hum-trend');
+        const wifiStatus = document.getElementById('wifi-status');
+        const cloudStatus = document.getElementById('cloud-status');
+        const wifiIcon = document.getElementById('wifi-icon');
+        const cloudIcon = document.getElementById('cloud-icon');
+        const deviceIp = document.getElementById('device-ip');
+        
+        // Admin panel elements
+        const dataTable = $('#data-table').DataTable({
+            columns: [
+                { data: 'timestamp', render: function(data) {
+                    return new Date(data).toLocaleString();
+                }},
+                { data: 'temperature' },
+                { data: 'humidity' },
+                { data: 'deviceIp' }
+            ],
+            pageLength: 10,
+            order: [[0, 'desc']]
+        });
+        
+        // Modal elements
+        const exportModal = document.getElementById('export-modal');
+        const deleteModal = document.getElementById('delete-modal');
+        const closeBtns = document.querySelectorAll('.close-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const deleteBtn = document.getElementById('delete-btn');
+        const filterBtn = document.getElementById('filter-btn');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
+        const confirmDeleteBtn = document.getElementById('confirm-delete');
+        const exportCsvBtn = document.getElementById('export-csv');
+        const exportJsonBtn = document.getElementById('export-json');
+        const exportExcelBtn = document.getElementById('export-excel');
+
+        // Chart Setup
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        yAxisID: 'y',
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#ef4444',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2,
+                        fill: true
+                    },
+                    {
+                        label: 'Humidity (% RH)',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        yAxisID: 'y1',
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#10b981',
+                        pointHoverBorderColor: '#fff',
+                        pointHoverBorderWidth: 2,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e5e7eb',
+                            font: {
+                                family: 'Poppins',
+                                size: 14,
+                                weight: 500
+                            },
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(31, 41, 55, 0.9)',
+                        titleColor: '#e5e7eb',
+                        bodyColor: '#e5e7eb',
+                        borderColor: '#374151',
+                        borderWidth: 1,
+                        padding: 15,
+                        cornerRadius: 8,
+                        titleFont: {
+                            family: 'Poppins',
+                            size: 14,
+                            weight: 600
+                        },
+                        bodyFont: {
+                            family: 'Poppins',
+                            size: 13
+                        },
+                        displayColors: true,
+                        boxPadding: 5
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'minute',
+                            displayFormats: {
+                                minute: 'HH:mm'
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(55, 65, 81, 0.5)',
+                            borderColor: '#374151',
+                            tickColor: '#374151'
+                        },
+                        ticks: {
+                            color: '#9ca3af',
+                            font: {
+                                family: 'Poppins',
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Temperature (°C)',
+                            color: '#ef4444',
+                            font: {
+                                family: 'Poppins',
+                                size: 14,
+                                weight: 500
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(55, 65, 81, 0.5)',
+                            borderColor: '#374151',
+                            tickColor: '#374151'
+                        },
+                        ticks: {
+                            color: '#9ca3af',
+                            font: {
+                                family: 'Poppins',
+                                size: 12
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Humidity (% RH)',
+                            color: '#10b981',
+                            font: {
+                                family: 'Poppins',
+                                size: 14,
+                                weight: 500
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(55, 65, 81, 0.5)',
+                            borderColor: '#374151',
+                            tickColor: '#374151',
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            color: '#9ca3af',
+                            font: {
+                                family: 'Poppins',
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Fetch Data from ThingSpeak
+        async function fetchData() {
+            try {
+                connectionStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Fetching data...';
+                
+                // Fetch from ThingSpeak
+                const tsResponse = await fetch(
+                    `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=8`
+                );
+                
+                if (!tsResponse.ok) throw new Error("Failed to fetch ThingSpeak data");
+                
+                const tsData = await tsResponse.json();
+                
+                if (tsData.feeds && tsData.feeds.length > 0) {
+                    const latestEntry = tsData.feeds[tsData.feeds.length - 1];
+                    const temp = parseFloat(latestEntry.field1);
+                    const hum = parseFloat(latestEntry.field2);
+                    
+                    // Update UI
+                    tempElement.textContent = temp.toFixed(1);
+                    humElement.textContent = hum.toFixed(1);
+                    
+                    // Update Trend Indicators
+                    updateTrendIndicator(tempTrend, temp, 25, 5); // 25°C as ideal temp
+                    updateTrendIndicator(humTrend, hum, 50, 15); // 50% as ideal humidity
+                    
+                    // Update Chart
+                    updateChart(tsData.feeds);
+                    
+                    // Update Last Updated Time
+                    const now = new Date();
+                    lastUpdateElement.textContent = now.toLocaleTimeString();
+                    
+                    connectionStatus.innerHTML = '<i class="fas fa-check-circle"></i> Connected';
+                    connectionStatus.className = "status connected";
+                    
+                    // Update device status based on latest data
+                    updateDeviceStatus({
+                        field1: temp, 
+                        field2: hum,
+                        field6: latestEntry.field6 || "No IP"
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                connectionStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Connection Error';
+                connectionStatus.className = "status error";
+                
+                // Show last known values if available
+                if (tempElement.textContent !== "--") {
+                    databaseStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Database: Offline (showing cached)';
+                    databaseStatus.className = "status warning";
+                }
+            }
+        }
+
+        // Update Device Status
+        function updateDeviceStatus(data) {
+            // WiFi Status - we assume if we got data, WiFi is connected
+            wifiStatus.textContent = "Connected";
+            wifiIcon.className = "fas fa-wifi";
+            wifiIcon.style.color = "#4cc9f0";
+            
+            // ThingSpeak Status - if we have temperature data, assume successful send
+            cloudStatus.textContent = "Connected";
+            cloudIcon.className = "fas fa-cloud";
+            cloudIcon.style.color = "#4cc9f0";
+            
+            // Update IP address if available
+            if (data.field6) {
+                deviceIp.textContent = `IP: ${data.field6}`;
+            } else {
+                deviceIp.textContent = `IP: --`;
+            }
+        }
+
+        // Load Data into Table
+        async function loadDataTable() {
+            try {
+                // In a real app, you would make an API call to your backend
+                // For now we'll use the ThingSpeak API directly
+                const response = await fetch(
+                    `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?api_key=${READ_API_KEY}&results=50`
+                );
+                
+                if (!response.ok) throw new Error("Failed to fetch historical data");
+                
+                const data = await response.json();
+                
+                // Format the data for our table
+                const formattedData = data.feeds.map(feed => ({
+                    timestamp: feed.created_at,
+                    temperature: feed.field1,
+                    humidity: feed.field2,
+                    deviceIp: feed.field6 || "Unknown"
+                }));
+                
+                dataTable.clear();
+                dataTable.rows.add(formattedData);
+                dataTable.draw();
+                
+                databaseStatus.innerHTML = '<i class="fas fa-check-circle"></i> Database: Connected';
+                databaseStatus.className = "status connected";
+            } catch (error) {
+                console.error("Error loading data table:", error);
+                databaseStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Database: Error';
+                databaseStatus.className = "status error";
+            }
+        }
+
+        // Update Chart with Historical Data
+        function updateChart(feeds) {
+            const tempData = [];
+            const humData = [];
+            
+            feeds.forEach(feed => {
+                const time = new Date(feed.created_at);
+                tempData.push({
+                    x: time,
+                    y: parseFloat(feed.field1)
+                });
+                humData.push({
+                    x: time,
+                    y: parseFloat(feed.field2)
+                });
+            });
+            
+            chart.data.datasets[0].data = tempData;
+            chart.data.datasets[1].data = humData;
+            chart.update();
+        }
+
+        // Update Trend Indicator
+        function updateTrendIndicator(element, value, ideal, threshold) {
+            const diff = value - ideal;
+            if (Math.abs(diff) < threshold / 2) {
+                element.innerHTML = '<i class="fas fa-equals"></i> Stable';
+                element.className = "trend stable";
+            } else if (diff > 0) {
+                element.innerHTML = '<i class="fas fa-arrow-up"></i> High';
+                element.className = "trend high";
+            } else {
+                element.innerHTML = '<i class="fas fa-arrow-down"></i> Low';
+                element.className = "trend low";
+            }
+        }
+
+        // Modal Functions
+        function openModal(modal) {
+            modal.style.display = 'block';
+        }
+        
+        function closeModal(modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Event Listeners
+        refreshBtn.addEventListener('click', fetchData);
+        
+        // Admin panel event listeners
+        exportBtn.addEventListener('click', () => openModal(exportModal));
+        deleteBtn.addEventListener('click', () => openModal(deleteModal));
+        filterBtn.addEventListener('click', loadDataTable);
+        
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const modal = this.closest('.modal');
+                closeModal(modal);
+            });
+        });
+        
+        cancelDeleteBtn.addEventListener('click', () => closeModal(deleteModal));
+        
+        confirmDeleteBtn.addEventListener('click', async function() {
+            const deleteAll = document.getElementById('delete-all').checked;
+            
+            try {
+                // In a real app, you would make an API call to your backend
+                // For now we'll just clear the local table
+                if (deleteAll) {
+                    dataTable.clear().draw();
+                } else {
+                    // In a real app, delete only filtered/selected data
+                    alert("In a real implementation, this would delete filtered data");
+                }
+                
+                alert(deleteAll ? "All data has been cleared from the table." : "Selected data would be deleted in a real implementation.");
+                closeModal(deleteModal);
+            } catch (error) {
+                console.error("Error deleting data:", error);
+                alert("Failed to delete data. Please try again.");
+            }
+        });
+        
+        // Export buttons functionality
+        exportCsvBtn.addEventListener('click', async function() {
+            try {
+                // Get filtered data from DataTable
+                const data = dataTable.rows({ search: 'applied' }).data().toArray();
+                
+                if (data.length === 0) {
+                    alert("No data to export");
+                    return;
+                }
+                
+                // Generate CSV content
+                let csvContent = "data:text/csv;charset=utf-8,";
+                
+                // Add headers
+                const headers = ["Timestamp", "Temperature (°C)", "Humidity (% RH)", "Device IP"];
+                csvContent += headers.join(",") + "\r\n";
+                
+                // Add data rows
+                data.forEach(row => {
+                    const timestamp = new Date(row.timestamp).toLocaleString();
+                    const values = [timestamp, row.temperature, row.humidity, row.deviceIp];
+                    csvContent += values.join(",") + "\r\n";
+                });
+                
+                // Create download link
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `iot_data_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                
+                // Trigger download
+                link.click();
+                document.body.removeChild(link);
+                
+                closeModal(exportModal);
+            } catch (error) {
+                console.error("Error exporting CSV:", error);
+                alert("Failed to export CSV");
+            }
+        });
+
+        exportJsonBtn.addEventListener('click', async function() {
+            try {
+                // Get filtered data from DataTable
+                const data = dataTable.rows({ search: 'applied' }).data().toArray();
+                
+                if (data.length === 0) {
+                    alert("No data to export");
+                    return;
+                }
+                
+                // Format data with proper dates
+                const formattedData = data.map(row => ({
+                    ...row,
+                    timestamp: new Date(row.timestamp).toISOString()
+                }));
+                
+                // Create JSON blob
+                const jsonContent = JSON.stringify(formattedData, null, 2);
+                const blob = new Blob([jsonContent], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                // Create download link
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `iot_data_${new Date().toISOString().slice(0,10)}.json`);
+                document.body.appendChild(link);
+                
+                // Trigger download
+                link.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                closeModal(exportModal);
+            } catch (error) {
+                console.error("Error exporting JSON:", error);
+                alert("Failed to export JSON");
+            }
+        });
+
+        exportExcelBtn.addEventListener('click', async function() {
+            try {
+                // Get filtered data from DataTable
+                const data = dataTable.rows({ search: 'applied' }).data().toArray();
+                
+                if (data.length === 0) {
+                    alert("No data to export");
+                    return;
+                }
+                
+                // Excel requires XML format (simplified version)
+                let xmlContent = `
+                    <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                          xmlns:x="urn:schemas-microsoft-com:office:excel" 
+                          xmlns="http://www.w3.org/TR/REC-html40">
+                    <head>
+                        <!--[if gte mso 9]>
+                        <xml>
+                            <x:ExcelWorkbook>
+                                <x:ExcelWorksheets>
+                                    <x:ExcelWorksheet>
+                                        <x:Name>IoT Data</x:Name>
+                                        <x:WorksheetOptions>
+                                            <x:DisplayGridlines/>
+                                        </x:WorksheetOptions>
+                                    </x:ExcelWorksheet>
+                                </x:ExcelWorksheets>
+                            </x:ExcelWorkbook>
+                        </xml>
+                        <![endif]-->
+                    </head>
+                    <body>
+                        <table>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Temperature (°C)</th>
+                                <th>Humidity (% RH)</th>
+                                <th>Device IP</th>
+                            </tr>
+                `;
+                
+                // Add data rows
+                data.forEach(row => {
+                    const timestamp = new Date(row.timestamp).toLocaleString();
+                    xmlContent += `
+                        <tr>
+                            <td>${timestamp}</td>
+                            <td>${row.temperature}</td>
+                            <td>${row.humidity}</td>
+                            <td>${row.deviceIp}</td>
+                        </tr>
+                    `;
+                });
+                
+                xmlContent += `
+                        </table>
+                    </body>
+                    </html>
+                `;
+                
+                // Create blob
+                const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel" });
+                const url = URL.createObjectURL(blob);
+                
+                // Create download link
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `iot_data_${new Date().toISOString().slice(0,10)}.xls`);
+                document.body.appendChild(link);
+                
+                // Trigger download
+                link.click();
+                
+                // Clean up
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                closeModal(exportModal);
+            } catch (error) {
+                console.error("Error exporting Excel:", error);
+                alert("Failed to export Excel");
+            }
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target);
+            }
+        });
+
+        // Initial Fetch & Auto-Refresh
+        fetchData();
+        setInterval(fetchData, UPDATE_INTERVAL);
+
+        // Load initial data table
+        loadDataTable();
+
+        // Initialize AOS (Animate On Scroll)
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({
+                duration: 800,
+                easing: 'ease-in-out',
+                once: false,
+                mirror: true
+            });
+
+            // Apply animations to elements
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.setAttribute('data-aos', 'fade-up');
+                card.setAttribute('data-aos-delay', (index * 100).toString());
+            });
+
+            document.querySelector('.chart-container').setAttribute('data-aos', 'fade-up');
+            document.querySelector('.chart-container').setAttribute('data-aos-delay', '300');
+
+            document.querySelector('.status-bar').setAttribute('data-aos', 'fade-up');
+            document.querySelector('.status-bar').setAttribute('data-aos-delay', '400');
+
+            document.querySelector('.admin-panel').setAttribute('data-aos', 'fade-up');
+            document.querySelector('.admin-panel').setAttribute('data-aos-delay', '500');
+
+            // Add hover animations to buttons
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.addEventListener('mouseover', function() {
+                    this.classList.add('animate__animated', 'animate__pulse');
+                });
+
+                button.addEventListener('mouseout', function() {
+                    this.classList.remove('animate__animated', 'animate__pulse');
+                });
+            });
+
+            // Add typing animation to title
+            const title = document.querySelector('h1');
+            title.classList.add('animate__animated', 'animate__fadeIn');
+
+            // Add custom animations for status indicators
+            const statusElements = document.querySelectorAll('.status');
+            statusElements.forEach(status => {
+                status.classList.add('animate__animated', 'animate__fadeInUp');
+            });
+
+            // Add animation to trend indicators
+            const trendElements = document.querySelectorAll('.trend');
+            trendElements.forEach(trend => {
+                trend.classList.add('animate__animated', 'animate__fadeIn');
+            });
+        });
+    </script>
+</body>
+</html>
